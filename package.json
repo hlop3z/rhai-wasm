@@ -1,0 +1,52 @@
+{
+  "name": "rhai-wasm",
+  "version": "0.1.0",
+  "description": "Rhai WebAssembly with high-precision decimal support",
+  "type": "module",
+  "main": "dist/rhai-wasm.js",
+  "module": "dist/rhai-wasm.js",
+  "browser": "dist/rhai-wasm.umd.js",
+  "types": "dist/rhai_wasm.d.ts",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build-wasm": "wasm-pack build --target web --out-dir pkg",
+    "build": "npm run build-wasm && rollup -c && rm -rf pkg",
+    "build:clean": "rm -rf dist pkg && npm run build",
+    "test": "node server.js"
+  },
+  "keywords": [
+    "rhai",
+    "wasm",
+    "webassembly",
+    "scripting",
+    "decimal",
+    "arithmetic",
+    "embedded",
+    "javascript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hlop3z/rhai-wasm.git"
+  },
+  "author": {
+    "name": "hlop3z",
+    "email": "hlop3z@example.com"
+  },
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/hlop3z/rhai-wasm/issues"
+  },
+  "homepage": "https://github.com/hlop3z/rhai-wasm#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.9.1"
+  }
+}

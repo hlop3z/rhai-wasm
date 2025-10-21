@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rhai WASM Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .test-result {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .test-pass {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+      .test-fail {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+      .test-summary {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧪 Rhai WASM Browser Test</h1>
+      <p>Testing the rhai-wasm module in the browser environment.</p>
+
+      <button id="runTests" onclick="runAllTests()">Run Tests</button>
+      <button id="clearResults" onclick="clearResults()">Clear Results</button>
+
+      <div id="results"></div>
+    </div>
+
+    <script type="module">
+      //import { runRhai } from "./dist/rhai-wasm.js";
+      import { runRhai } from "https://unpkg.com/rhai-wasm@0.1.0/dist/rhai-wasm.js";
+
+      let testCount = 0;
+      let passCount = 0;
+
+      function addResult(name, passed, result, error = null) {
+        const resultsDiv = document.getElementById("results");
+        const resultDiv = document.createElement("div");
+        resultDiv.className = `test-result ${
+          passed ? "test-pass" : "test-fail"
+        }`;
+
+        const status = passed ? "✅" : "❌";
+        const output = passed ? result : error;
+        resultDiv.innerHTML = `<strong>${status} ${name}:</strong> ${output}`;
+
+        resultsDiv.appendChild(resultDiv);
+
+        testCount++;
+        if (passed) passCount++;
+      }
+
+      function updateSummary() {
+        const resultsDiv = document.getElementById("results");
+        const summaryDiv = document.createElement("div");
+        summaryDiv.className = "test-summary";
+        summaryDiv.innerHTML = `📊 Test Summary: ${passCount}/${testCount} tests passed`;
+        resultsDiv.appendChild(summaryDiv);
+      }
+
+      async function runAllTests() {
+        const button = document.getElementById("runTests");
+        button.disabled = true;
+        button.textContent = "Running Tests...";
+
+        document.getElementById("results").innerHTML = "";
+        testCount = 0;
+        passCount = 0;
+
+        console.log("🧪 Running rhai-wasm tests...");
+
+        const tests = [
+          // Basic arithmetic tests
+          { name: "Basic addition", code: "5 + 3" },
+          { name: "Basic subtraction", code: "10 - 4" },
+          { name: "Basic multiplication", code: "6 * 7" },
+          { name: "Basic division", code: "15 / 3" },
+          { name: "Complex arithmetic", code: "(2 + 3) * 4 - 1" },
+
+          // Decimal precision tests
+          {
+            name: "Decimal addition",
+            code: `
+                    let x = parse_decimal("1.5");
+                    let y = parse_decimal("2.3");
+                    x + y
+                `,
+          },
+          {
+            name: "Decimal multiplication",
+            code: `
+                    let x = parse_decimal("0.1");
+                    let y = parse_decimal("0.2");
+                    x * y
+                `,
+          },
+          {
+            name: "High precision decimal",
+            code: `
+                    let x = parse_decimal("0.123456789");
+                    let y = parse_decimal("0.987654321");
+                    x + y
+                `,
+          },
+
+          // String operations
+          { name: "String concatenation", code: '"Hello" + " " + "World"' },
+          { name: "String length", code: '"Hello World".len' },
+          { name: "String indexing", code: '"Hello"[0]' },
+
+          // Variable assignments
+          {
+            name: "Variable assignment",
+            code: `
+                    let x = 42;
+                    let y = x * 2;
+                    y
+                `,
+          },
+          {
+            name: "Multiple variables",
+            code: `
+                    let a = 10;
+                    let b = 20;
+                    let c = a + b;
+                    c
+                `,
+          },
+
+          // Boolean operations
+          { name: "Boolean true", code: "true" },
+          { name: "Boolean false", code: "false" },
+          { name: "Boolean comparison", code: "5 > 3" },
+          { name: "Boolean equality", code: "5 == 5" },
+
+          // Array operations
+          { name: "Array creation", code: "[1, 2, 3, 4, 5]" },
+          { name: "Array indexing", code: "[10, 20, 30][1]" },
+          { name: "Array length", code: "[1, 2, 3].len" },
+
+          // Conditional expressions
+          {
+            name: "If expression",
+            code: `
+                    if 5 > 3 {
+                        "greater"
+                    } else {
+                        "smaller"
+                    }
+                `,
+          },
+          {
+            name: "Ternary-like expression",
+            code: `
+                    let x = 10;
+                    if x > 5 { "big" } else { "small" }
+                `,
+          },
+        ];
+
+        // Error handling tests
+        const errorTests = [
+          { name: "Invalid syntax", code: "invalid syntax here" },
+          { name: "Undefined variable", code: "undefined_variable + 1" },
+          { name: "Division by zero", code: "1 / 0" },
+        ];
+
+        // Run regular tests
+        for (const test of tests) {
+          try {
+            const result = await runRhai(test.code);
+            addResult(test.name, true, result);
+          } catch (error) {
+            addResult(test.name, false, null, error.message);
+          }
+        }
+
+        // Run error tests (these should fail)
+        for (const test of errorTests) {
+          try {
+            const result = await runRhai(test.code);
+            // If we get here without error, it's unexpected
+            addResult(
+              test.name,
+              false,
+              null,
+              `Expected error but got: ${result}`
+            );
+          } catch (error) {
+            // This is expected for error tests
+            addResult(test.name, true, `Error caught: ${error.message}`);
+          }
+        }
+
+        updateSummary();
+
+        button.disabled = false;
+        button.textContent = "Run Tests";
+      }
+
+      function clearResults() {
+        document.getElementById("results").innerHTML = "";
+        testCount = 0;
+        passCount = 0;
+      }
+
+      // Make functions global
+      window.runAllTests = runAllTests;
+      window.clearResults = clearResults;
+    </script>
+  </body>
+</html>
