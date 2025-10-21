@@ -1,6 +1,6 @@
 {
   "name": "rhai-wasm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Rhai WebAssembly with high-precision decimal support",
   "type": "module",
   "main": "dist/rhai-wasm.js",
