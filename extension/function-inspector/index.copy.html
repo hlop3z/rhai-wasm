@@ -1,0 +1,17 @@
+<html>
+  <body>
+    <script src="dist/inspect.js"></script>
+    <script>
+      const funcCode = `(name, last="doe", age=20, list=[1,2,3], dict={root:{key:"value"}}, flag=true, nothing=null, dotted=app.plugin.method) => { return; }`;
+      const objCode = `let obj = {name:null, last:"doe", age:20, list:[1,2,3], dict:{root:{key:"value"}}, flag:true, nothing:null, dotted:app.plugin.method};`;
+      const funcResult = inspect.signature(funcCode);
+      const objResult = inspect.signature(objCode);
+      console.log("Function:", funcResult);
+      console.log("Object:", objResult);
+      console.log(
+        "Equal:",
+        JSON.stringify(funcResult) === JSON.stringify(objResult)
+      );
+    </script>
+  </body>
+</html>

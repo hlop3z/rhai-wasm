@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Monaco Editor Side by Side</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        display: flex; /* Use flex to align editors side by side */
+      }
+
+      #editor-left,
+      #editor-right {
+        height: 100%;
+        width: 50%;
+      }
+
+      #editor-left {
+        border-right: 1px solid #555; /* Optional visual separation */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="editor-left"></div>
+    <div id="editor-right"></div>
+
+    <!-- Prettier  -->
+    <script src="https://unpkg.com/prettier@3.6.2/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@3.6.2/plugins/babel.js"></script>
+    <script src="https://unpkg.com/prettier@3.6.2/plugins/estree.js"></script>
+
+    <!--  -->
+
+    <!-- Inspect -->
+    <script src="dist/inspect.js"></script>
+    <script src="usage/basic.js"></script>
+
+    <!--  -->
+
+    <!-- Monaco Editor -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/loader.js"></script>
+    <script>
+      require.config({
+        paths: {
+          vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs",
+        },
+      });
+
+      window.Code = {
+        ID() {
+          return (
+            "id-" +
+            Date.now().toString(36) +
+            "-" +
+            Math.random().toString(36).slice(2, 8)
+          );
+        },
+        types(typeDefinitions, name = null) {
+          const filename = name || this.ID() + ".d.ts";
+          this.plugin((monaco) => {
+            monaco.languages.typescript.typescriptDefaults.addExtraLib(
+              typeDefinitions,
+              "file:///" + filename
+            );
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(
+              typeDefinitions,
+              "file:///" + filename
+            );
+          });
+        },
+        plugin(callback) {
+          require(["vs/editor/editor.main"], function () {
+            callback(monaco);
+          });
+        },
+        create(element, options, callback) {
+          this.plugin((monaco) => {
+            const editor = monaco.editor.create(element, options);
+            if (callback) callback(editor);
+          });
+        },
+      };
+
+      // Add custom types
+      Code.types(CODE_TYPES);
+
+      // Left editor (editable)
+      Code.create(document.getElementById("editor-left"), {
+        value: CODE.FUNCTION,
+        language: "javascript",
+        theme: "vs-dark",
+        automaticLayout: true,
+      });
+
+      (async () => {
+        // Right editor (read-only or duplicate)
+        const json = await signatureJSON(CODE.FUNCTION);
+        console.log(JSON.parse(json).full_name);
+        Code.create(document.getElementById("editor-right"), {
+          value: json,
+          language: "json",
+          theme: "vs-dark",
+          readOnly: true, // make it un-editable
+          automaticLayout: true,
+        });
+      })();
+    </script>
+  </body>
+</html>

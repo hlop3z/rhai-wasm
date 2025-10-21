@@ -1,4 +1,5 @@
-import init, { run_rhai } from "./dist/rhai_wasm.js";
+import init, { run_rhai } from "../dist/rhai_wasm.js";
+export { get_version as getVersion } from "../dist/rhai_wasm.js";
 
 let initialized = false;
 let initPromise = null;
@@ -20,21 +21,18 @@ async function ensureInit() {
 /**
  * Run Rhai script code with auto-initialization
  * @param {string} code - The Rhai script code to evaluate
+ * @param {string} [json_input] - Optional JSON string to be made available as `request` variable in the script
  * @returns {Promise<string>} The result as a string, or error message if evaluation fails
  */
-export async function runRhai(code) {
+export async function runRhai(code, json_input) {
   await ensureInit();
-  return run_rhai(code);
-}
-
-/**
- * Synchronous version that returns a promise
- * @param {string} code - The Rhai script code to evaluate
- * @returns {Promise<string>} The result as a string, or error message if evaluation fails
- */
-export function runRhaiSync(code) {
-  return runRhai(code);
+  const result = run_rhai(code, JSON.stringify(json_input));
+  return JSON.parse(result);
 }
 
 // Export the original WASM functions for advanced usage
-export { run_rhai, init };
+import dictToRhai from "./object_to_rhai.js";
+export default {
+  run: runRhai,
+  dict: dictToRhai
+};

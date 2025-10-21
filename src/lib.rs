@@ -1,6 +1,15 @@
 use wasm_bindgen::prelude::*;
-use rhai::{Engine, Dynamic, OptimizationLevel};
-use serde_json::json;
+use rhai::{Engine, Dynamic, OptimizationLevel, Scope};
+use serde_json::{json, Value};
+
+#[cfg(test)]
+mod tests;
+
+/// Get the version of the WASM module for debugging
+#[wasm_bindgen]
+pub fn get_version() -> String {
+    "v0.2.0-debug".to_string()
+}
 
 /// Create a new Rhai engine with full optimizations and decimal support
 fn create_engine() -> Engine {
@@ -10,6 +19,67 @@ fn create_engine() -> Engine {
     engine.set_optimization_level(OptimizationLevel::Full);
 
     engine
+}
+
+/// Core Rhai evaluation logic - separated from WASM bindings for testing
+pub fn evaluate_rhai_with_json(code: &str, json_input: Option<&str>) -> Result<String, String> {
+    let engine = create_engine();
+    let mut scope = Scope::new();
+    
+    // Parse and register JSON input as 'request' variable if provided
+    if let Some(json_str) = json_input {
+        match serde_json::from_str::<Value>(json_str) {
+            Ok(json_value) => {
+                let request_dynamic = rhai_json_to_dynamic(&json_value);
+                scope.set_or_push("request", request_dynamic);
+            },
+            Err(e) => {
+                return Err(format!("Error parsing JSON input: {}", e));
+            }
+        }
+    }
+    
+    match engine.eval_with_scope::<Dynamic>(&mut scope, code) {
+        Ok(result) => {
+            match rhai_dynamic_to_json(&result) {
+                Ok(json_value) => Ok(json_value.to_string()),
+                Err(e) => Err(format!("Error converting to JSON: {}", e)),
+            }
+        },
+        Err(e) => Err(format!("Error: {}", e)),
+    }
+}
+
+/// Convert JSON value to Rhai Dynamic
+fn rhai_json_to_dynamic(value: &serde_json::Value) -> Dynamic {
+    match value {
+        serde_json::Value::Null => Dynamic::UNIT,
+        serde_json::Value::Bool(b) => Dynamic::from(*b),
+        serde_json::Value::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                // Convert to i32 to match Rhai's default integer type
+                Dynamic::from(i as i32)
+            } else if let Some(f) = n.as_f64() {
+                Dynamic::from(f)
+            } else {
+                Dynamic::from(n.to_string())
+            }
+        },
+        serde_json::Value::String(s) => Dynamic::from(s.clone()),
+        serde_json::Value::Array(arr) => {
+            let rhai_array: rhai::Array = arr.iter()
+                .map(|item| rhai_json_to_dynamic(item))
+                .collect();
+            Dynamic::from(rhai_array)
+        },
+        serde_json::Value::Object(obj) => {
+            let mut rhai_map = rhai::Map::new();
+            for (key, val) in obj {
+                rhai_map.insert(key.clone().into(), rhai_json_to_dynamic(val));
+            }
+            Dynamic::from(rhai_map)
+        },
+    }
 }
 
 /// Convert a Rhai Dynamic value to JSON
@@ -48,24 +118,18 @@ fn rhai_dynamic_to_json(value: &Dynamic) -> Result<serde_json::Value, Box<rhai::
     }
 }
 
-/// Evaluate Rhai script code and return the result as a JSON string
+/// Evaluate Rhai script code with optional JSON input and return the result as a JSON string
 /// 
 /// # Arguments
 /// * `code` - The Rhai script code to evaluate
+/// * `json_input` - Optional JSON string to be made available as `request` variable in the script
 /// 
 /// # Returns
 /// * JSON string representation of the result, or error message if evaluation fails
 #[wasm_bindgen]
-pub fn run_rhai(code: &str) -> String {
-    let engine = create_engine();
-    
-    match engine.eval::<Dynamic>(code) {
-        Ok(result) => {
-            match rhai_dynamic_to_json(&result) {
-                Ok(json_value) => json_value.to_string(),
-                Err(e) => format!("Error converting to JSON: {}", e),
-            }
-        },
-        Err(e) => format!("Error: {}", e),
+pub fn run_rhai(code: &str, json_input: Option<String>) -> String {
+    match evaluate_rhai_with_json(code, json_input.as_deref()) {
+        Ok(result) => result,
+        Err(error) => error,
     }
 }

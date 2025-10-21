@@ -20,7 +20,7 @@ try {
 export default [
     // ES Module build
     {
-        input: 'index.js',
+        input: 'src_js/index.js',
         output: {
             file: 'dist/rhai-wasm.js',
             format: 'es',
@@ -32,22 +32,4 @@ export default [
         ],
         external: ['./pkg/rhai_wasm.js']
     },
-    // UMD build for browser
-    {
-        input: 'index.js',
-        output: {
-            file: 'dist/rhai-wasm.umd.js',
-            format: 'umd',
-            name: 'RhaiWasm',
-            sourcemap: true,
-            globals: {
-                './pkg/rhai_wasm.js': 'RhaiWasmCore'
-            }
-        },
-        plugins: [
-            nodeResolve(),
-            terser()
-        ],
-        external: ['./pkg/rhai_wasm.js']
-    }
 ];

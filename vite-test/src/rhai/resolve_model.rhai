@@ -50,12 +50,10 @@ let model = #{
 };
 
 // Update the model with new values and get a snapshot for rendering
-let snapshot = resolver(model, #{
-  name: "john",
-  last: "doe"
-});
+let snapshot = resolver(model, request);
 
-snapshot
+return snapshot;
+
 
 //print(snapshot); // #{"full_name":"john doe","last":"doe","name":"john"}
 //print(model);    // #{"full_name": Fn(), "last": (), "name": ()}

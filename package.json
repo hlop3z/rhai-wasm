@@ -13,9 +13,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "build-wasm": "wasm-pack build --target web --out-dir pkg",
-    "build": "npm run build-wasm && rollup -c && rm -rf pkg",
-    "build:clean": "rm -rf dist pkg && npm run build",
+    "clean": "rm -rf dist pkg",
+    "build:wasm": "wasm-pack build --target web --out-dir pkg --release",
+    "build:js": "rollup -c",
+    "build:copy": "cp -r dist /examples/vite-project/src/rhai",
+    "build": "npm run clean && npm run build:wasm && npm run build:js",
     "test": "node server.js"
   },
   "keywords": [

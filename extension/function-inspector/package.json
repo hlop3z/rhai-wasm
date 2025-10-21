@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && rollup -c",
+    "dev": "node script.js"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.28.4"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.8",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^4.52.5"
+  }
+}
