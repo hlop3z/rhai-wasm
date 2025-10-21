@@ -70,8 +70,11 @@
     </div>
 
     <script type="module">
-      //import { runRhai } from "./dist/rhai-wasm.js";
-      import { runRhai } from "https://unpkg.com/rhai-wasm@0.1.0/dist/rhai-wasm.js";
+      import init, { run_rhai } from "./dist/rhai_wasm.js";
+      // import init, { run_rhai } from "https://unpkg.com/rhai-wasm@0.1.0/dist/rhai-wasm.js";
+
+      // Initialize the WASM module
+      await init();
 
       let testCount = 0;
       let passCount = 0;
@@ -211,7 +214,7 @@
         // Run regular tests
         for (const test of tests) {
           try {
-            const result = await runRhai(test.code);
+            const result = await run_rhai(test.code);
             addResult(test.name, true, result);
           } catch (error) {
             addResult(test.name, false, null, error.message);
@@ -221,7 +224,7 @@
         // Run error tests (these should fail)
         for (const test of errorTests) {
           try {
-            const result = await runRhai(test.code);
+            const result = await run_rhai(test.code);
             // If we get here without error, it's unexpected
             addResult(
               test.name,
